@@ -1,5 +1,6 @@
 import os
 import os
+import base64
 from colorama import init, Fore, Style  # Import colorama for colored text output
 
 # Initialize colorama
