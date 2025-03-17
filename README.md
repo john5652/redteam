@@ -190,5 +190,4 @@ Contributions are welcome! Fork the repository and submit a pull request.
 
 This project is licensed under the MIT License.
 
-This is great, can you give it to me in a README file I can copy and paste to upload to Git?
 
