@@ -30,6 +30,23 @@ def prompt_for_user():
         return input("Enter the username: ")
     return None
 
+def rpc_anonymous_connect():
+    """Attempts an anonymous RPC connection to a target machine and lists available shares."""
+    target_ip = input("Enter the target IP address: ")
+    file_path = prompt_for_output()  # Reusing your prompt function to save output if needed
+    
+    # Construct the rpcclient command
+    command = f"rpcclient -U \"\" {target_ip}"
+    
+    print(f"Attempting anonymous RPC connection to {target_ip}...\n")
+    run_command(command, file_path)  # Reusing your run_command() function
+
+    # Optional: List available shares if the connection is successful
+    print("\nAttempting to list available shares...\n")
+    shares_command = f"rpcclient -U \"\" {target_ip} -c 'netshareenum'"
+    run_command(shares_command, file_path)
+
+
 # Helper to prompt for Domain Controller IP
 def prompt_for_dc_ip():
     """Ask the user if they want to specify a DC IP."""
