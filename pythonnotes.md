@@ -286,10 +286,5 @@ p32(0x1337)
 
 ---
 
-## ✅ Tip
-If you're learning, try each block in a REPL or Python file!
-
----
-
 _Last updated: March 2025._
 
