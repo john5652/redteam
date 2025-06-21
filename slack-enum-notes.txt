@@ -1,0 +1,90 @@
+Slack Enumeration Notes 
+====================================================
+
+Objective:
+----------
+Enumerate Slack application artifacts under a compromised user's .config directory to extract valuable data (e.g., credentials, tokens, message history).
+
+Slack Directory Discovered:
+---------------------------
+User: margaret
+Path: /home/margaret/.config/Slack/
+
+Key contents:
+-------------
+- exported_data/
+- storage/
+- logs/
+- Cookies, Cache, GPUCache, etc.
+
+What is .config?
+----------------
+- The .config directory contains user-specific application configuration data.
+- For Electron-based apps like Slack, this includes local storage, exported data, session info, and tokens.
+
+Slack Folder Breakdown:
+-----------------------
+
+./Slack/
+├── exported_data/             << HIGH VALUE — Chat exports
+│   ├── secure/2020-05-18.json << Target file with possible credentials
+│   ├── team/, project/, users.json, channels.json — Workspace metadata
+│
+├── storage/                   << Contains workspace metadata, user info, and settings
+│   ├── slack-appTeams, slack-teams, slack-settings, etc.
+│
+├── logs/                      << Helpful for tracing app behavior or debugging
+│   ├── browser.log, webapp-console.log
+│
+├── Local Storage/            << Persistent browser-like data (IndexedDB/leveldb)
+│
+├── Session Storage/          << Temporary session data
+│
+├── Cookies                   << May contain session or auth cookies
+│
+├── Code Cache, GPUCache, Cache, blob_storage
+│                             << Low-value compiled code, temporary files
+
+Enumeration Steps:
+------------------
+
+1. Identify Slack folder:
+   ls -la ~/.config/Slack/
+
+2. Check exported_data:
+   cat exported_data/secure/2020-05-18.json
+   (Look for credentials or sensitive shared messages)
+
+3. Check storage/ files:
+   cat storage/slack-*
+   (Look for workspace info, tokens, recent users)
+
+4. Inspect Local Storage:
+   cd "Local Storage/leveldb"
+   strings * | grep -i 'token\|session\|auth'
+
+5. Review logs/ (optional):
+   cat logs/browser.log
+   cat logs/webapp-console.log
+
+Useful Tools:
+-------------
+- jq for formatting JSON:
+  jq . exported_data/secure/2020-05-18.json
+
+- grep for keywords:
+  grep -i 'password\|token\|user' exported_data/secure/2020-05-18.json
+
+What to Look For:
+-----------------
+- Hardcoded/shared passwords in messages
+- Slack tokens or workspace API keys
+- Workspace/user recon info (to inform lateral movement)
+- Default/weak configuration settings
+
+Notes:
+------
+- These files are local only — not auto-synced to Slack cloud.
+- Auth tokens may be expired but can still be useful if reused or cached.
+- Focus on: exported_data/, storage/, Local Storage/
+
